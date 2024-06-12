@@ -1,0 +1,6 @@
+g1 = {{r^2, 0} {0, 0, r^2  Sin[theta]^2}}
+derivlist = {theta, phi}
+
+ChristoffelSymbol[g1, derivlist1]
+RicciTensor[g1, derivlist]
+ricci = RicciScalar[g1, derivlist]
