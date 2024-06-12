@@ -1,0 +1,31 @@
+#GR Functions taken and edited from https://mathematica.stackexchange.com/questions/8895/how-to-calculate-scalar-curvature-ricci-tensor-and-christoffel-symbols-in-mathe:
+
+InverseMetric[g_] := Simplify[Inverse[g]]
+
+ChristoffelSymbol[g_, xx_] := 
+ Block[{n, ig, res}, n = Length[g]; ig = InverseMetric[g];
+  res = Table[(1/2)*
+     Sum[ig[[i, s]]*(-D[g[[j, k]], xx[[s]]] + D[g[[j, s]], xx[[k]]] + 
+         D[g[[s, k]], xx[[j]]]), {s, 1, n}], {i, 1, n}, {j, 1, n}, {k,
+      1, n}];
+  Simplify[res]]
+
+RiemannTensor[g_, xx_] := 
+ Block[{n, Chr, res}, n = Length[g]; Chr = ChristoffelSymbol[g, xx];
+  res = Table[
+    D[Chr[[i, k, m]], xx[[l]]] - D[Chr[[i, k, l]], xx[[m]]] + 
+     Sum[Chr[[i, s, l]]*Chr[[s, k, m]], {s, 1, n}] - 
+     Sum[Chr[[i, s, m]]*Chr[[s, k, l]], {s, 1, n}], {i, 1, n}, {k, 1, 
+     n}, {l, 1, n}, {m, 1, n}];
+  Simplify[res]]
+
+RicciTensor[g_, xx_] := 
+ Block[{Rie, res, n}, n = Length[g]; Rie = RiemannTensor[g, xx];
+  res = Table[Sum[Rie[[s, i, s, j]], {s, 1, n}], {i, 1, n}, {j, 1, n}];
+  Simplify[res]]
+
+RicciScalar[g_, xx_] := 
+ Block[{Ricc, ig, res, n}, n = Length[g]; Ricc = RicciTensor[g, xx]; 
+  ig = InverseMetric[g];
+  res = Sum[ig[[s, i]]  Ricc[[s, i]], {s, 1, n}, {i, 1, n}];
+  Simplify[res]]
