@@ -1,0 +1,49 @@
+InverseMetric[g_] := Simplify[Inverse[g]]
+
+ChristoffelSymbol[g_, xx_] := 
+ Block[{n, ig, res}, n = Length[g]; ig = InverseMetric[g];
+  res = Table[(1/2)*
+     Sum[ig[[i, s]]*(-D[g[[j, k]], xx[[s]]] + D[g[[j, s]], xx[[k]]] + 
+         D[g[[s, k]], xx[[j]]]), {s, 1, n}], {i, 1, n}, {j, 1, n}, {k,
+      1, n}];
+  Simplify[res]]
+
+RiemannTensor[g_, xx_] := 
+ Block[{n, Chr, res}, n = Length[g]; Chr = ChristoffelSymbol[g, xx];
+  res = Table[
+    D[Chr[[i, k, m]], xx[[l]]] - D[Chr[[i, k, l]], xx[[m]]] + 
+     Sum[Chr[[i, s, l]]*Chr[[s, k, m]], {s, 1, n}] - 
+     Sum[Chr[[i, s, m]]*Chr[[s, k, l]], {s, 1, n}], {i, 1, n}, {k, 1, 
+     n}, {l, 1, n}, {m, 1, n}];
+  Simplify[res]]
+
+RicciTensor[g_, xx_] := 
+ Block[{Rie, res, n}, n = Length[g]; Rie = RiemannTensor[g, xx];
+  res = Table[Sum[Rie[[s, i, s, j]], {s, 1, n}], {i, 1, n}, {j, 1, n}];
+  Simplify[res]]
+
+RicciScalar[g_, xx_] := 
+ Block[{Ricc, ig, res, n}, n = Length[g]; Ricc = RicciTensor[g, xx]; 
+  ig = InverseMetric[g];
+  res = Sum[ig[[s, i]]  Ricc[[s, i]], {s, 1, n}, {i, 1, n}];
+  Simplify[res]]
+
+g1 = {{a[r], 0, 0, 0}, {0, r^2, 0, 0}, {0, 0, r^2 Sin[theta]^2, 
+    0}, {0, 0, 0, b[r]}};
+derivlist = {r, theta, phi, t};
+chris = ChristoffelSymbol[g1, derivlist];
+ricciT = RicciTensor[g1, derivlist];
+ricciS  = RicciScalar[g1, derivlist]
+
+II = Sqrt[Det[g1]]  ricciS
+Elq1 = D[II, a[r]] - D[D[II, D[a[r], r]], r] + 
+  D[D[D[II, D[D[a[r], r], r]] , r], r]
+Elq2 = D[II, b[r]] - D[D[II, D[b[r], r]], r] + 
+  D[D[D[II, D[D[b[r], r], r]] , r], r]
+
+a[r] = r/(c + r)
+b[r] = (c + r) d/r
+Simplify[Elq1]
+Simplify[Elq2]
+D[b[r], r]
+D[a[r], r]
