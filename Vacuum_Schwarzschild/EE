@@ -29,9 +29,9 @@ RicciScalar[g_, xx_] :=
   res = Sum[ig[[s, i]] Ricc[[s, i]], {s, 1, n}, {i, 1, n}];
   Simplify[res]]
 
-g1 = {{a[r], 0, 0, 0}, {0, r^2, 0, 0}, {0, 0, r^2 Sin[theta]^2, 
-    0}, {0, 0, 0, b[r]}};
-derivlist = {r, theta, phi, t};
+g1 = {{b[r], 0, 0, 0}, {0, a[r], 0, 0}, {0, 0, r^2, 0}, {0, 0, 0, 
+    r^2 Sin[theta]^2}};
+derivlist = {t, r, theta, phi};
 chris = ChristoffelSymbol[g1, derivlist];
 ricciT = RicciTensor[g1, derivlist];
 
