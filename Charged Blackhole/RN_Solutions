@@ -1,0 +1,91 @@
+InverseMetric[g_] := Simplify[Inverse[g]]
+
+ChristoffelSymbol[g_, xx_] := 
+ Block[{n, ig, res}, n = Length[g]; ig = InverseMetric[g];
+  res = Table[(1/2)*
+     Sum[ig[[i, 
+        s]]*(-D[g[[j, k]], xx[[s]]] + D[g[[j, s]], xx[[k]]] + 
+         D[g[[s, k]], xx[[j]]]), {s, 1, n}], {i, 1, n}, {j, 1, n}, {k,
+      1, n}];
+  Simplify[res]]
+
+RiemannTensor[g_, xx_] := 
+ Block[{n, Chr, res}, n = Length[g]; Chr = ChristoffelSymbol[g, xx];
+  res = Table[
+    D[Chr[[i, k, m]], xx[[l]]] - D[Chr[[i, k, l]], xx[[m]]] + 
+     Sum[Chr[[i, s, l]]*Chr[[s, k, m]], {s, 1, n}] - 
+     Sum[Chr[[i, s, m]]*Chr[[s, k, l]], {s, 1, n}], {i, 1, n}, {k, 1, 
+     n}, {l, 1, n}, {m, 1, n}];
+  Simplify[res]]
+
+RicciTensor[g_, xx_] := 
+ Block[{Rie, res, n}, n = Length[g]; Rie = RiemannTensor[g, xx];
+  res = Table[Sum[Rie[[s, i, s, j]], {s, 1, n}], {i, 1, n}, {j, 1, n}];
+  Simplify[res]]
+
+RicciScalar[g_, xx_] := 
+ Block[{Ricc, ig, res, n}, n = Length[g]; Ricc = RicciTensor[g, xx]; 
+  ig = InverseMetric[g];
+  res = Sum[ig[[s, i]] Ricc[[s, i]], {s, 1, n}, {i, 1, n}];
+  Simplify[res]]
+
+EMStressTensor[g_, fxx_] := Block[{ig, if, f, res}, n = Length[g];
+  ig = InverseMetric[g];
+  f = fxx;
+  if = Table[
+    Sum[g[[m, aa]]*g[[v, bb]]*f[[aa, bb]], {aa, 1, n}, {bb, 1, 
+      n}], {m, 1, n}, {v, 1, n}];
+  res = Table[
+    Sum[1/4*g[[aa, bb]]*f[[m, v]]*if[[m, v]] - 
+      g[[bb, v]]*f[[aa, m]]*if[[v, m]], {m, 1, n}, {v, 1, n}]
+    , {aa, 1, n}, {bb, 1, n}];
+  Simplify[res]]
+
+EMFieldTensor[elist_, blist_, xx_] := 
+ Block[{ res, n, er, etheta, ephi, br, btheta, bphi}, n = Length[xx];
+  er = elist[[Position[xx, r][[1, 1]]]];
+  etheta = elist[[Position[xx, theta][[1, 1]]]];
+  ephi = elist[[Position[xx, phi][[1, 1]]]];
+  br = blist[[Position[xx, r][[1, 1]]]];
+  btheta = blist[[Position[xx, theta][[1, 1]]]];
+  bphi = blist[[Position[xx, phi][[1, 1]]]];
+  res = Table[0^a*0^b, {a, 4}, {b, 4}];
+  res[[1]][[2]] = -er; res[[1]][[3]] = -etheta; res[[1]][[4]] = -ephi; 
+  res[[2]][[1]] = er; res[[3]][[1]] = etheta; res[[4]][[1]] = ephi;
+  res[[2]][[3]] = bphi; res[[2]][[4]] = -btheta; res[[3]][[4]] = br;
+  res[[3]][[2]] = -bphi; res[[4]][[2]] = btheta; res[[4]][[3]] = -br;
+  Simplify[res]
+  ]
+
+
+g1 = {{b[r], 0, 0, 0}, {0, a[r], 0, 0}, {0, 0, r^2, 0}, {0, 0, 0, 
+    r^2 Sin[theta]^2}};
+derivlist = {t, r, theta, phi};
+chris = ChristoffelSymbol[g1, derivlist];
+ricciT = RicciTensor[g1, derivlist]
+
+EMF = EMFieldTensor[{0, e1, 0, 0}, {0, 0, 0, 0}, derivlist]
+
+EMT = EMStressTensor[g1, EMF]
+EMTScalar = 
+ Sum[InverseMetric[g1][[m, v]]*EMT[[m, v]], {m, 1, Length[g1]}, {v, 1,
+    Length[g1]}]
+
+
+radialde = 
+ Solve[ricciT == 8*Pi*g*(EMT - EMTScalar*g1/2), {a[r], D[a[r], r], 
+   b[r], D[b[r], r], D[D[b[r], r], r] }]
+
+diffFuncList = {D[a[r], r], D[b[r], r], D[D[b[r], r], r] }
+deList = {}
+For[i = 1, i <= Length[radialde[[1]]], i++, 
+ AppendTo[deList, diffFuncList[[i]] /. radialde[[1, i]]]]
+deList
+
+deEquations = {}
+For[i = 1, i < Length[deList], i++, 
+ AppendTo[deEquations, diffFuncList[[i]] == deList[[i]]]]
+
+deEquations
+
+sol = DSolve[deEquations, {a[r], b[r] }, r]
